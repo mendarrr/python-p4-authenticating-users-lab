@@ -18,6 +18,39 @@ db.init_app(app)
 
 api = Api(app)
 
+class Login(Resource):
+    def post(self):
+        username = request.json.get('username')
+        user = User.query.filter_by(username=username).first()
+        if user:
+            session['user_id'] = user.id
+            return user.to_dict(), 200
+        return {'message': 'Invalid username'}, 401
+
+class Logout(Resource):
+    def delete(self):
+        session.pop('user_id', None)
+        return {}, 204
+
+class CheckSession(Resource):
+    def get(self):
+        user_id = session.get('user_id')
+        if user_id:
+            user = db.session.get(User, user_id)
+            if user:
+                return user.to_dict(), 200
+        return {}, 401
+
+class ClearSession(Resource):
+    def delete(self):
+        session.clear()
+        return {}, 204
+
+api.add_resource(Login, '/login')
+api.add_resource(Logout, '/logout')
+api.add_resource(CheckSession, '/check_session')
+
+
 class ClearSession(Resource):
 
     def delete(self):
